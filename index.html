@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>39本书卷</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #b8fc94;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            background-color: #b4fd8a;
+            margin-top: 20px;
+        }
+        #game-board {
+            border: 2px solid #333;
+            background-color: #fdfb8a;
+        }
+        #score {
+            margin-top: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #timer {
+            margin-top: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        #game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: rgb(250, 242, 187);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-board" width="600" height="600"></canvas>
+        <div id="timer">时间: 00:00</div>
+        <div id="score">下一本书: 创世</div>
+    </div>
+    <div id="game-over">
+        <h2>完成了！</h2>
+        <p>恭喜恭喜！</p>
+        <p id="final-time">用时: 00:00</p>
+        <button onclick="location.reload()">再来一次</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game-board');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const gameOverElement = document.getElementById('game-over');
+        const finalTimeElement = document.getElementById('final-time');
+
+        const gridSize = 50;
+        const tileCount = canvas.width / gridSize;
+        
+        let snake = [
+            { x: 5, y: 5 }
+        ];
+        let velocity = { x: 0, y: 0 };
+        let nextNumber = 1;
+        let foods = [];
+        let startTime = null;
+        let gameTime = 0;
+        let timerInterval;
+
+        // 漢数字の配列
+        const kanjiNumbers = [
+            '创世', '出埃及', '利未', '民数', '申命', '约书亚', '士师', '路得', '撒上', '撒下',
+            '王上', '王下', '代上', '代下', '以斯拉', '尼希米', '以斯帖', '约伯', '诗篇', '箴言',
+            '传道', '雅歌', '以赛亚', '耶利米', '哀歌', '以西结', '但以理', '何西阿', '约珥', '阿摩斯',
+            '俄巴底亚', '约拿', '弥迦', '那鸿', '哈巴谷', '西番亚', '哈该', '撒迦利亚', '玛拉基'
+        ];
+
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (!startTime) {
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    gameTime = Date.now() - startTime;
+                    timerElement.textContent = `时间: ${formatTime(gameTime)}`;
+                }, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                finalTimeElement.textContent = `用时: ${formatTime(gameTime)}`;
+            }
+        }
+
+        // 数字の餌を生成
+        function generateFoods() {
+            const positions = new Set();
+            
+            // スネークの初期位置を除外
+            snake.forEach(segment => {
+                positions.add(`${segment.x},${segment.y}`);
+            });
+
+            for (let i = 1; i <= 39; i++) {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * tileCount);
+                    y = Math.floor(Math.random() * tileCount);
+                } while (positions.has(`${x},${y}`));
+                
+                positions.add(`${x},${y}`);
+                foods.push({ x, y, number: i, kanji: kanjiNumbers[i-1] });
+            }
+        }
+
+        function drawGame() {
+            clearScreen();
+            drawSnake();
+            drawFoods();
+            moveSnake();
+            checkCollision();
+
+            setTimeout(drawGame, 300);
+        }
+
+        function clearScreen() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawSnake() {
+            ctx.fillStyle = '#ff69b4';
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+            });
+        }
+
+        function drawFoods() {
+            foods.forEach(food => {
+                ctx.fillStyle = '#0000ff';
+                ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '16px PMingLiU';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(food.kanji, food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
+            });
+        }
+
+        function moveSnake() {
+            const head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
+            
+            if (head.x < 0) head.x = tileCount - 1;
+            if (head.x >= tileCount) head.x = 0;
+            if (head.y < 0) head.y = tileCount - 1;
+            if (head.y >= tileCount) head.y = 0;
+
+            snake.unshift(head);
+            snake.pop();
+        }
+
+        function checkCollision() {
+            const head = snake[0];
+            
+            const foodIndex = foods.findIndex(food => 
+                food.x === head.x && food.y === head.y && food.number === nextNumber
+            );
+
+            if (foodIndex !== -1) {
+                if (velocity.x !== 0 || velocity.y !== 0) {
+                    startTimer(); // Start timer on first move
+                }
+                
+                const eatenFood = foods[foodIndex];
+                foods.splice(foodIndex, 1);
+                snake.push({});
+                nextNumber++;
+                
+                if (nextNumber <= 39) {
+                    scoreElement.textContent = `下一本书: ${kanjiNumbers[nextNumber-1]}`;
+                } else {
+                    gameOverElement.style.display = 'block';
+                    stopTimer();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (velocity.y !== 1) {
+                        velocity = { x: 0, y: -1 };
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (velocity.y !== -1) {
+                        velocity = { x: 0, y: 1 };
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (velocity.x !== 1) {
+                        velocity = { x: -1, y: 0 };
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (velocity.x !== -1) {
+                        velocity = { x: 1, y: 0 };
+                    }
+                    break;
+            }
+        });
+
+        // ゲーム開始
+        generateFoods();
+        drawGame();
+    </script>
+</body>
+</html>
