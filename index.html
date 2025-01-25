@@ -7,27 +7,32 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #b8fc94;
+            background-color: #acf087;
             font-family: Arial, sans-serif;
+        }
+        h1{
+            color:rgb(56, 135, 254);
+            text-align: center;
         }
         #game-container {
             background-color: #b4fd8a;
             margin-top: 20px;
         }
         #game-board {
-            border: 2px solid #333;
+            border: 2px solid #8af272;
             background-color: #fdfb8a;
         }
         #score {
             margin-top: 10px;
             font-size: 24px;
+            color: #3780da;
             font-weight: bold;
         }
         #timer {
             margin-top: 10px;
             font-size: 24px;
             font-weight: bold;
-            color: #333;
+            color: #3780da;
         }
         #game-over {
             display: none;
@@ -36,7 +41,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: rgba(0, 0, 0, 0.8);
-            color: rgb(250, 242, 187);
+            color: rgb(242, 230, 150);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
@@ -45,6 +50,9 @@
 </head>
 <body>
     <div id="game-container">
+        <div>
+            <h1>39books</h1>
+        </div>
         <canvas id="game-board" width="600" height="600"></canvas>
         <div id="timer">时间: 00:00</div>
         <div id="score">下一本书: 创世</div>
@@ -146,7 +154,7 @@
         }
 
         function drawSnake() {
-            ctx.fillStyle = '#ff69b4';
+            ctx.fillStyle = 'mediumseagreen';
             snake.forEach(segment => {
                 ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
             });
@@ -154,11 +162,11 @@
 
         function drawFoods() {
             foods.forEach(food => {
-                ctx.fillStyle = '#0000ff';
+                ctx.fillStyle = '#ffa500';
                 ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
                 
-                ctx.fillStyle = 'white';
-                ctx.font = '16px PMingLiU';
+                ctx.fillStyle = 'mediumblue';
+                ctx.font = '14px PMingLiU';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(food.kanji, food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2);
